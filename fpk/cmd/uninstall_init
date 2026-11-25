@@ -1,0 +1,11 @@
+#!/bin/bash
+# 卸载前：确保常驻进程已停止
+set -u
+# 生命周期脚本所在目录
+SELF_DIR="$(cd "$(dirname "$0")" && pwd)"
+if [ -x "$SELF_DIR/main" ]; then
+    "$SELF_DIR/main" stop || true
+else
+    bash "$SELF_DIR/main" stop || true
+fi
+exit 0

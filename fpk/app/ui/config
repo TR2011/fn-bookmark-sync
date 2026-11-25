@@ -1,0 +1,14 @@
+{
+  ".url": {
+    "edge-bookmarks.main": {
+      "title": "Fn收藏夹同步",
+      "icon": "images/icon_{0}.png",
+      "type": "url",
+      "protocol": "",
+      "gatewayPrefix": "/app/edge-bookmarks",
+      "gatewaySocket": "app.sock",
+      "url": "/app/edge-bookmarks",
+      "allUsers": true
+    }
+  }
+}

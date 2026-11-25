@@ -1,0 +1,14 @@
+#!/bin/bash
+# 升级后：校验配置与数据目录完好，不改动已有书签数据。
+# 与升级前钩子相同，所有写操作容错，结尾强制返回 0。
+set -u
+BASE="$(cd "$(dirname "$0")/.." && pwd)"
+ETC="${TRIM_PKGETC:-$BASE/etc}"
+VAR="${TRIM_PKGVAR:-$BASE/var}"
+mkdir -p "$ETC" "$VAR" 2>/dev/null || true
+if [ ! -f "$ETC/config.json" ] && [ -f "$VAR/config.json.bak" ]; then
+    cp -f "$VAR/config.json.bak" "$ETC/config.json" 2>/dev/null || true
+    chmod 600 "$ETC/config.json" 2>/dev/null || true
+fi
+# SQLite 数据库位于 $VAR/bookmarks.db，升级过程不触碰
+exit 0

@@ -1,0 +1,12 @@
+#!/bin/bash
+# 升级前：备份配置，保证失败可回滚。所有操作都必须容错并返回 0，
+# 避免升级钩子失败被 fnOS 判定为安装/升级中止。
+set -u
+BASE="$(cd "$(dirname "$0")/.." && pwd)"
+ETC="${TRIM_PKGETC:-$BASE/etc}"
+VAR="${TRIM_PKGVAR:-$BASE/var}"
+mkdir -p "$VAR" 2>/dev/null || true
+if [ -f "$ETC/config.json" ]; then
+    cp -f "$ETC/config.json" "$VAR/config.json.bak" 2>/dev/null || true
+fi
+exit 0

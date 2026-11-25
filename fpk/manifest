@@ -1,0 +1,14 @@
+appname=edge-bookmarks
+version=1.4.0
+display_name=Fn收藏夹同步
+desc=把 Chromium 系浏览器的收藏夹自动同步到飞牛 NAS。多用户独立空间，用户名密码登录，书签自动去重、按设备管理、按设备标签拉取、快照可视化管理、导出 HTML / CSV / JSON、一键还原本机历史备份。需配合安装浏览器插件。
+platform=all
+source=thirdparty
+maintainer=oldkevin
+distributor=oldkevin
+service_port=8765
+checkport=false
+ctl_stop=true
+desktop_uidir=ui
+desktop_applaunchname=edge-bookmarks.main
+checksum=

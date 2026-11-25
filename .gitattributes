@@ -1,0 +1,20 @@
+# 尊重各平台原始换行符：打包产物与 shell 脚本必须保持 LF，
+# 否则 checksum 校验或 fnOS 上的 bash 生命周期脚本会出问题。
+*.fpk    binary
+*.zip    binary
+*.png    binary
+*.PNG    binary
+*.tgz    binary
+
+# 服务端与插件源码、FPK 生命周期脚本统一 LF（构建脚本本身也按 LF 处理）。
+*.py     text eol=lf
+*.js     text eol=lf
+*.mjs    text eol=lf
+*.css    text eol=lf
+*.html   text eol=lf
+*.md     text eol=lf
+*.sc     text eol=lf
+fpk/cmd/* text eol=lf
+fpk/manifest text eol=lf
+fpk/config/* text eol=lf
+tools/*.sh text eol=lf

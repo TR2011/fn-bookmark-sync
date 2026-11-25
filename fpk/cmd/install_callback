@@ -1,0 +1,7 @@
+#!/bin/bash
+# 安装后钩子：零副作用，原因见 install_init。
+#
+# 访问令牌由服务端 Config 在首次启动时自动生成（config.json 不存在时创建，
+# 已存在时只读取，保证升级不换令牌），并由 cmd/main start 写入
+# $TRIM_PKGETC/token.txt 作为 SSH 兜底读取方式。
+exit 0

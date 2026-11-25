@@ -1,0 +1,10 @@
+#!/bin/bash
+# 卸载后钩子：零副作用。
+#
+# v1.0.5 起所有生命周期钩子都不在安装/卸载阶段写文件，避免降权执行时
+# 任何失败被 fnOS 包装成安装中止。
+#
+# 数据保留策略不变：SQLite 数据库 $TRIM_PKGVAR/bookmarks.db 与配置
+# $TRIM_PKGETC/config.json 不会被本应用删除，重新安装即可继续使用。
+# 数据位置见 docs/部署指南.md「四、数据位置」。
+exit 0

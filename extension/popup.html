@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<link rel="stylesheet" href="popup.css">
+<title>Fn收藏夹同步</title>
+</head>
+<body>
+<header>
+  <div class="logo">
+    <svg viewBox="0 0 64 64" width="16" height="16" aria-hidden="true">
+      <path d="M18 12h28v40L32 43 18 52z" fill="currentColor"/>
+      <path d="M32 38l6.2-10h-3.4V18h-5.6v10h-3.4z" fill="#0f7b6c"/>
+    </svg>
+  </div>
+  <strong class="name">Fn收藏夹同步</strong>
+  <span id="version" class="ver">v1.4.0</span>
+  <button id="settingsBtn" class="icon-btn" title="设置">
+    <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.9">
+      <circle cx="12" cy="12" r="3.2"/><path d="M19.4 15a1.7 1.7 0 0 0 .34 1.87l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06A1.7 1.7 0 0 0 15 19.4a1.7 1.7 0 0 0-1 1.56V21a2 2 0 1 1-4 0v-.09A1.7 1.7 0 0 0 9 19.4a1.7 1.7 0 0 0-1.87.34l-.06.06A2 2 0 1 1 4.24 17l.06-.06A1.7 1.7 0 0 0 4.64 15a1.7 1.7 0 0 0-1.56-1H3a2 2 0 1 1 0-4h.09A1.7 1.7 0 0 0 4.6 9a1.7 1.7 0 0 0-.34-1.87l-.06-.06A2 2 0 1 1 7 4.24l.06.06A1.7 1.7 0 0 0 9 4.64a1.7 1.7 0 0 0 1-1.56V3a2 2 0 1 1 4 0v.09A1.7 1.7 0 0 0 15 4.6a1.7 1.7 0 0 0 1.87-.34l.06-.06A2 2 0 1 1 19.76 7l-.06.06A1.7 1.7 0 0 0 19.36 9a1.7 1.7 0 0 0 1.56 1H21a2 2 0 1 1 0 4h-.09a1.7 1.7 0 0 0-1.51 1z"/>
+    </svg>
+  </button>
+</header>
+
+<main>
+  <div id="setupHint" class="setup-hint hidden">
+    <span>还没连接 NAS</span>
+    <button id="setupBtn" class="btn small primary">去设置</button>
+  </div>
+
+  <section class="status">
+    <div class="line">
+      <span id="stateBadge" class="state"><i></i><span id="stateText">检查中…</span></span>
+      <span id="lastSync" class="muted">尚未同步</span>
+    </div>
+    <div class="line sub">
+      <span id="userTag" class="chip-user">—</span>
+      <span id="channelTag" class="chip-chan hidden"></span>
+    </div>
+    <div class="counts">
+      <span>本机 <b id="localCount">—</b></span>
+      <span>云端 <b id="cloudCount">—</b></span>
+      <span>设备 <b id="deviceCount">—</b></span>
+    </div>
+    <div id="errorBox" class="msg bad hidden"></div>
+    <div id="okBox" class="msg good hidden"></div>
+  </section>
+
+  <button id="syncBtn" class="btn primary full">立即同步</button>
+
+  <details class="more">
+    <summary>更多操作</summary>
+
+    <div class="op-block">
+      <div class="op-head"><strong>本设备历史备份</strong><span class="dim">选一份拉回浏览器</span></div>
+      <div class="restore">
+        <select id="snapSelect" aria-label="本机历史备份">
+          <option value="">加载历史备份…</option>
+        </select>
+        <button id="restoreBtn" class="btn small">一键拉回</button>
+      </div>
+      <p class="hint">还原到「其他收藏夹 → 来自飞牛 NAS」，自动跳过已存在的网址。</p>
+    </div>
+
+    <div class="op-block">
+      <div class="op-head"><strong>拉取其他设备书签</strong><span id="pullDeviceCount" class="dim">载入中…</span></div>
+      <div id="pullDevices" class="pull-chips" role="group" aria-label="选择来源设备"></div>
+      <div class="pull-actions">
+        <button id="pullBtn" class="btn small primary">拉取所选设备</button>
+        <button id="webBtn" class="link-btn">打开管理界面</button>
+      </div>
+      <p class="hint">标签是本账号下的其他设备；选「全部」则导入全部云端书签。</p>
+    </div>
+
+    <p id="pullHint" class="muted hidden"></p>
+  </details>
+</main>
+
+<footer>
+  <span>数据仅保存在你的 NAS</span>
+  <button id="optionsLink" class="text-btn">设置</button>
+</footer>
+<script type="module" src="popup.js"></script>
+</body>
+</html>

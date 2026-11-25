@@ -1,0 +1,43 @@
+{
+  "manifest_version": 3,
+  "name": "Fn收藏夹同步",
+  "short_name": "Fn收藏夹",
+  "version": "1.4.0",
+  "description": "把 Chromium 系浏览器（Edge / Chrome / Brave / Vivaldi / Opera 等）的收藏夹自动同步到飞牛 OS（fnOS）NAS。用户名密码登录、自动去重、按设备标签拉取、一键还原本机历史备份。",
+  "author": "oldkevin",
+  "minimum_chrome_version": "91",
+  "permissions": [
+    "bookmarks",
+    "storage",
+    "alarms",
+    "notifications"
+  ],
+  "host_permissions": [
+    "http://*/*",
+    "https://*/*"
+  ],
+  "background": {
+    "service_worker": "background.js",
+    "type": "module"
+  },
+  "action": {
+    "default_title": "Fn收藏夹同步",
+    "default_popup": "popup.html",
+    "default_icon": {
+      "16": "icons/16.png",
+      "32": "icons/32.png",
+      "48": "icons/48.png",
+      "128": "icons/128.png"
+    }
+  },
+  "options_ui": {
+    "page": "options.html",
+    "open_in_tab": true
+  },
+  "icons": {
+    "16": "icons/16.png",
+    "32": "icons/32.png",
+    "48": "icons/48.png",
+    "128": "icons/128.png"
+  }
+}

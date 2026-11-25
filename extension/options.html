@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Fn收藏夹同步 · 设置</title>
+<link rel="stylesheet" href="options.css">
+</head>
+<body>
+<div class="shell">
+  <header class="page-head">
+    <div class="logo">
+      <svg viewBox="0 0 64 64" width="20" height="20" aria-hidden="true">
+        <path d="M18 12h28v40L32 43 18 52z" fill="currentColor"/>
+        <path d="M32 38l6.2-10h-3.4V18h-5.6v10h-3.4z" fill="#0f7b6c"/>
+      </svg>
+    </div>
+    <div class="grow">
+      <h1>Fn收藏夹同步</h1>
+      <p>浏览器插件设置 · 每人一个独立书签空间</p>
+    </div>
+    <span class="ver">v1.4.0</span>
+  </header>
+
+  <div id="notice" class="notice hidden"></div>
+
+  <section class="card">
+    <div class="card-title">
+      <h2>连接 NAS</h2>
+      <span class="tag">粘贴即用</span>
+    </div>
+
+    <label class="lbl" for="pasteArea">① 粘贴插件配置</label>
+    <textarea id="pasteArea" rows="2" placeholder='粘贴管理页「复制插件配置」得到的 {"serverUrl":"…","username":"…"}'></textarea>
+    <div class="row-between">
+      <small>在飞牛管理页「连接浏览器插件」点「复制插件配置」；配置不含密码。</small>
+      <button id="parseBtn" class="btn small">解析并填入</button>
+    </div>
+    <div id="parsedInfo" class="parsed-info hidden"></div>
+
+    <div class="grid2">
+      <div>
+        <label class="lbl" for="password">② 密码 <span class="dim">必填</span></label>
+        <div class="inline">
+          <input id="password" type="password" placeholder="本应用账号的密码" spellcheck="false" autocomplete="current-password">
+          <button id="togglePassword" class="btn small">显示</button>
+        </div>
+      </div>
+      <div>
+        <label class="lbl" for="deviceName">设备名称</label>
+        <input id="deviceName" type="text" placeholder="自动识别，如 Chrome · Windows">
+      </div>
+    </div>
+
+    <div class="actions">
+      <button id="testBtn" class="btn">测试连接</button>
+      <button id="saveBtn" class="btn primary">保存</button>
+      <button id="syncBtn" class="btn primary">保存并同步</button>
+    </div>
+  </section>
+
+  <details class="card" id="strategyBox">
+    <summary>同步策略 <span class="tag dim">改动自动保存</span></summary>
+    <label class="switch-row">
+      <input type="checkbox" id="autoSync">
+      <span><strong>定时自动同步</strong><small>按间隔上传完整收藏夹快照。</small></span>
+    </label>
+    <label class="switch-row">
+      <input type="checkbox" id="syncOnChange">
+      <span><strong>收藏夹变动时同步</strong><small>增删改后约 1 分钟上传。</small></span>
+    </label>
+    <label class="switch-row">
+      <input type="checkbox" id="pullEnabled">
+      <span><strong>同步时顺带拉取其他设备的书签</strong><small>导入到「来自飞牛 NAS」，自动去重，默认关闭。</small></span>
+    </label>
+    <div class="row-between tight">
+      <span class="dim">同步间隔</span>
+      <select id="interval">
+        <option value="5">每 5 分钟</option>
+        <option value="15">每 15 分钟</option>
+        <option value="30">每 30 分钟</option>
+        <option value="60">每 1 小时</option>
+        <option value="180">每 3 小时</option>
+        <option value="720">每 12 小时</option>
+      </select>
+    </div>
+    <div class="strategy-foot">
+      <span id="strategyState" class="save-state">改动会自动保存并立即重排定时任务</span>
+      <button id="saveStrategyBtn" class="btn small primary">保存策略</button>
+    </div>
+  </details>
+
+  <details class="card" id="advancedBox">
+    <summary>高级：手工修改连接信息</summary>
+    <div class="form-row">
+      <label for="serverUrl">主地址</label>
+      <input id="serverUrl" type="text" placeholder="http://192.168.1.10:8765 或 https://nas.example.com:8443/eb-api" spellcheck="false" autocomplete="off">
+      <small>支持内网直连、飞牛统一网关 <code>/app/edge-bookmarks</code>、反代路径。通常无需手动填写。</small>
+    </div>
+    <div class="form-row">
+      <label for="serverUrlAlt">备用地址</label>
+      <input id="serverUrlAlt" type="text" placeholder="https://nas.example.com:8765" spellcheck="false" autocomplete="off">
+    </div>
+    <div class="form-row">
+      <label for="username">用户名</label>
+      <input id="username" type="text" placeholder="由管理员分配" spellcheck="false" autocomplete="username">
+    </div>
+  </details>
+
+  <details class="card">
+    <summary>运行状态 <span id="iState" class="dim">—</span></summary>
+    <div class="info-grid">
+      <div><span>连接状态</span><strong id="iStateFull">—</strong></div>
+      <div><span>当前账号</span><strong id="iUser">—</strong></div>
+      <div><span>当前通道</span><strong id="iChannel" class="mono">—</strong></div>
+      <div><span>上次同步</span><strong id="iLast">—</strong></div>
+      <div><span>上次上传</span><strong id="iCount">—</strong></div>
+      <div><span>客户端 ID</span><strong id="iClient" class="mono">—</strong></div>
+    </div>
+    <div id="iError" class="err hidden"></div>
+    <div class="actions left">
+      <button id="refreshBtn" class="btn small">刷新</button>
+      <button id="pullBtn" class="btn small">拉取云端书签</button>
+      <button id="resetBtn" class="btn small danger">重置客户端 ID</button>
+      <a id="webLink" class="btn small" href="#" target="_blank">打开管理界面</a>
+    </div>
+  </details>
+
+  <details class="card tips">
+    <summary>使用提示</summary>
+    <ul>
+      <li>在扩展页开启「开发人员模式」→「加载解压缩的扩展」选中插件目录：Edge / Chrome / Brave / 多数国产浏览器用 <code>chrome://extensions</code>（Edge 亦支持 <code>edge://extensions</code>），Vivaldi 用 <code>vivaldi://extensions</code>，Opera 用 <code>opera://extensions</code>。</li>
+      <li>飞牛应用首次打开需注册管理员；管理员可在「用户管理」添加成员，每人独立空间。</li>
+      <li>管理页显示的<b>主地址就是你当前打开的管理页地址</b>，点「复制插件配置」粘贴到本页即可。</li>
+      <li>「更多操作 → 一键拉回」可把本设备以往备份整棵还原到浏览器，自动跳过已存在网址。</li>
+      <li>书签按网址自动去重；管理端可增删改查，删除的网址会进入回收站。</li>
+      <li>同步是<b>全量快照</b>：服务端保存最新一份，并保留最近 10 份历史快照。</li>
+    </ul>
+  </details>
+
+  <footer class="page-foot">Fn收藏夹同步 v1.4.0 · 飞牛 OS FPK 客户端配套插件</footer>
+</div>
+<script type="module" src="options.js"></script>
+</body>
+</html>

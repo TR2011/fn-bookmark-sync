@@ -1,0 +1,401 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<base href="__BASE__">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Fn收藏夹同步 · 飞牛 OS</title>
+<link rel="stylesheet" href="style.css">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'><rect width='64' height='64' rx='14' fill='%230f7b6c'/><path d='M18 12h28v40L32 43 18 52z' fill='white'/><path d='M32 38l6.2-10h-3.4V18h-5.6v10h-3.4z' fill='%23096b5d'/></svg>">
+</head>
+<body>
+
+<div id="login" class="login-wrap hidden">
+  <div class="login-card">
+    <div class="brand">
+      <div class="brand-icon">
+        <svg viewBox="0 0 64 64" width="30" height="30" aria-hidden="true">
+          <path d="M18 12h28v40L32 43 18 52z" fill="currentColor"/>
+          <path d="M32 38l6.2-10h-3.4V18h-5.6v10h-3.4z" fill="#0f7b6c"/>
+        </svg>
+      </div>
+      <div>
+        <h1>Fn收藏夹同步</h1>
+        <p>飞牛 OS · 多用户书签中心</p>
+      </div>
+    </div>
+
+    <div id="registerBox" class="setup-box hidden">
+      <strong>首次使用 · 注册管理员</strong>
+      <p>本应用第一次打开，请先创建管理员账号。之后可在「用户管理」添加成员，<b>每个人只同步、查看自己的收藏夹</b>。</p>
+      <label class="field-label" for="regUsername">管理员用户名</label>
+      <input id="regUsername" type="text" autocomplete="username" placeholder="例如 admin">
+      <label class="field-label" for="regDisplay">显示名称（可选）</label>
+      <input id="regDisplay" type="text" placeholder="例如 小明">
+      <label class="field-label" for="regPassword">密码</label>
+      <input id="regPassword" type="password" autocomplete="new-password" placeholder="至少 6 位">
+      <label class="field-label" for="regPassword2">确认密码</label>
+      <input id="regPassword2" type="password" autocomplete="new-password" placeholder="再输入一次">
+      <button id="registerBtn" class="btn primary full">创建管理员并进入</button>
+    </div>
+
+    <div id="loginForm">
+      <label class="field-label" for="usernameInput">用户名</label>
+      <input id="usernameInput" type="text" autocomplete="username" placeholder="本应用的用户名">
+      <label class="field-label" for="passwordInput">密码</label>
+      <input id="passwordInput" type="password" autocomplete="current-password" placeholder="本应用的密码">
+      <button id="loginBtn" class="btn primary full">登录</button>
+    </div>
+
+    <p id="loginErr" class="err"></p>
+    <p class="hint">账号保存在 NAS 本机 SQLite，密码加盐哈希存储；浏览器插件用同一组账号登录。</p>
+  </div>
+</div>
+
+<div id="app" class="app hidden">
+  <header class="topbar">
+    <div class="brand compact">
+      <div class="brand-icon small">
+        <svg viewBox="0 0 64 64" width="18" height="18" aria-hidden="true">
+          <path d="M18 12h28v40L32 43 18 52z" fill="currentColor"/>
+          <path d="M32 38l6.2-10h-3.4V18h-5.6v10h-3.4z" fill="#0f7b6c"/>
+        </svg>
+      </div>
+      <h1>Fn收藏夹同步</h1>
+    </div>
+    <div class="top-stats">
+      <span><b id="statDevices">—</b> 设备</span>
+      <span><b id="statBookmarks">—</b> 书签</span>
+      <span data-jump="snapshots" title="点击管理快照"><b id="statSnapshots">—</b> 快照</span>
+      <span class="wide"><b id="statLast">—</b> 同步</span>
+    </div>
+    <div class="topbar-right">
+      <span class="version" id="versionTag">v1.4.0</span>
+      <span id="userTag" class="user-tag">—</span>
+      <button id="logoutBtn" class="btn ghost small">退出</button>
+    </div>
+  </header>
+
+  <main class="container">
+    <details class="connect" id="connectCard">
+      <summary>
+        <span class="connect-ico" aria-hidden="true">◎</span>
+        <strong>连接浏览器插件</strong>
+        <span class="sum-meta" id="connectSummary">地址自动识别</span>
+        <span class="grow"></span>
+        <button id="copyConfigBtn" class="btn primary small">复制插件配置</button>
+        <span class="chev">▾</span>
+      </summary>
+      <div class="connect-body">
+        <p class="note" id="accessNote">地址由服务端按当前访问方式自动识别，无需填写；复制配置后在插件设置页粘贴，再输入一次密码即可。</p>
+        <div class="copy-grid">
+          <div class="kv">
+            <label>插件主地址</label>
+            <div class="copy-row">
+              <input id="serverAddr" readonly>
+              <button class="btn small" data-copy="serverAddr">复制</button>
+            </div>
+          </div>
+          <div class="kv">
+            <label>登录账号</label>
+            <div class="copy-row">
+              <input id="usernameView" readonly>
+              <button class="btn small" data-copy="usernameView">复制</button>
+            </div>
+          </div>
+          <div class="kv" id="altRow">
+            <label>备用地址</label>
+            <div class="copy-row">
+              <input id="altAddr" readonly>
+              <button class="btn small" data-copy="altAddr">复制</button>
+            </div>
+          </div>
+        </div>
+        <div class="fold-row">
+          <details class="sub">
+            <summary>全部候选地址（<span id="addrCount">0</span>）</summary>
+            <div id="addressList" class="address-list"></div>
+          </details>
+          <details class="sub">
+            <summary>将复制的 JSON</summary>
+            <pre id="configPreview">载入中…</pre>
+          </details>
+        </div>
+      </div>
+    </details>
+
+    <nav class="tabs" id="tabs">
+      <button class="tab active" data-tab="devices">设备</button>
+      <button class="tab" data-tab="manage">书签管理</button>
+      <button class="tab" data-tab="browse">书签浏览</button>
+      <button class="tab" data-tab="snapshots">快照</button>
+      <button class="tab" data-tab="search">搜索</button>
+      <button class="tab" data-tab="logs">日志</button>
+      <button class="tab hidden" id="usersTab" data-tab="users">用户</button>
+      <button class="tab" data-tab="settings">设置</button>
+      <span class="grow"></span>
+      <button id="refreshBtn" class="btn ghost small">刷新</button>
+    </nav>
+
+    <section class="card tab-panel active" id="panel-devices">
+      <div id="deviceListView">
+        <div class="card-head">
+          <h2>我的设备 <span class="muted">点击设备进入它的管理页</span></h2>
+          <div class="head-actions">
+            <span class="muted">导出</span>
+            <select id="allFmt" class="fmt-select" aria-label="导出格式">
+              <option value="html">HTML</option>
+              <option value="csv">CSV</option>
+              <option value="json">JSON</option>
+            </select>
+            <button id="exportAllBtn" class="btn small">导出</button>
+          </div>
+        </div>
+        <div id="deviceList" class="device-list"></div>
+      </div>
+
+      <div id="deviceDetail" class="hidden">
+        <div class="detail-head">
+          <button id="deviceBackBtn" class="btn small ghost">← 返回</button>
+          <div class="detail-title">
+            <strong id="dtName">—</strong>
+            <span class="muted" id="dtMeta">—</span>
+          </div>
+          <div class="head-actions">
+            <select id="deviceFmt" class="fmt-select" aria-label="导出格式">
+              <option value="html">HTML</option>
+              <option value="csv">CSV</option>
+              <option value="json">JSON</option>
+            </select>
+            <button id="dtExportBtn" class="btn small">导出该设备</button>
+            <button id="dtDelDeviceBtn" class="btn small danger-ghost">删除设备</button>
+          </div>
+        </div>
+
+        <div class="tree-toolbar">
+          <label class="check"><input type="checkbox" id="dtCheckAll"> 全选</label>
+          <span class="muted" id="dtSelected">已选 0 / 0</span>
+          <span class="grow"></span>
+          <input id="dtFilter" class="search slim" placeholder="筛选标题或网址">
+          <button id="dtMoveBtn" class="btn small" disabled>修改文件夹</button>
+          <button id="dtDeleteBtn" class="btn small danger-ghost" disabled>删除选中</button>
+        </div>
+        <div id="deviceTree" class="tree"></div>
+
+        <details class="trash-box">
+          <summary>
+            <strong>回收站</strong>
+            <span class="muted" id="trashCountDevice">0 条</span>
+            <span class="grow"></span>
+            <button id="clearTrashDevice" class="btn small danger-ghost">一键清空</button>
+          </summary>
+          <p class="muted small">删除后同步会自动跳过这些网址，可随时恢复；一键清空后下次同步会重新带回。</p>
+          <div id="trashListDevice" class="trash-list"></div>
+        </details>
+      </div>
+    </section>
+
+    <section class="card tab-panel" id="panel-manage">
+      <div class="card-head">
+        <h2>书签管理 <span class="muted">增删改查 · 全部设备</span></h2>
+        <div class="head-actions">
+          <button id="addBookmarkBtn" class="btn small primary">+ 新增</button>
+          <button id="reloadBookmarksBtn" class="btn small">刷新</button>
+        </div>
+      </div>
+      <div id="dedupNote" class="dedup-note">正在统计去重结果…</div>
+      <div class="bm-toolbar">
+        <input id="bmSearch" class="search slim" placeholder="筛选标题或网址">
+        <span class="muted" id="bmCount">—</span>
+        <span class="grow"></span>
+        <button id="bmSearchClear" class="btn small">清除筛选</button>
+        <button id="batchDeleteBtn" class="btn small danger-ghost">删除选中</button>
+      </div>
+      <div class="bm-table-wrap">
+        <table class="bm-table">
+          <thead>
+            <tr>
+              <th class="col-check"><input type="checkbox" id="bmCheckAll" title="全选本页"></th>
+              <th>标题</th><th>网址</th><th>来源</th><th class="col-ops">操作</th>
+            </tr>
+          </thead>
+          <tbody id="bmTable"></tbody>
+        </table>
+      </div>
+      <div class="pager">
+        <button id="bmPrev" class="btn small">上一页</button>
+        <span id="bmPageInfo" class="muted">—</span>
+        <button id="bmNext" class="btn small">下一页</button>
+      </div>
+      <details class="trash-box">
+        <summary>
+          <strong>回收站</strong>
+          <span class="muted" id="trashCount">0 条</span>
+          <span class="grow"></span>
+          <button id="clearTrash" class="btn small danger-ghost">一键清空</button>
+        </summary>
+        <div id="trashList" class="trash-list"></div>
+      </details>
+    </section>
+
+    <section class="card tab-panel" id="panel-browse">
+      <div class="card-head">
+        <h2>书签浏览 <span class="muted">只读 · 按目录查看</span></h2>
+        <div class="head-actions">
+          <span class="muted">导出</span>
+          <select id="browseFmt" class="fmt-select" aria-label="导出格式">
+            <option value="html">HTML</option>
+            <option value="csv">CSV</option>
+            <option value="json">JSON</option>
+          </select>
+          <button class="btn small" id="browseExportBtn">导出</button>
+        </div>
+      </div>
+      <div id="browseDevices" class="chips"></div>
+      <div id="treeView" class="tree"></div>
+    </section>
+
+    <section class="card tab-panel" id="panel-snapshots">
+      <div class="card-head">
+        <h2>历史快照 <span class="muted">查看 · 下载 · 删除 · 每台设备自动保留最近 10 份</span></h2>
+        <div class="head-actions">
+          <button id="snapReloadBtn" class="btn small">刷新</button>
+          <button id="snapClearBtn" class="btn small danger-ghost">清空全部</button>
+        </div>
+      </div>
+      <div id="snapDevices" class="chips"></div>
+      <div class="bm-toolbar">
+        <span class="muted" id="snapSummary">—</span>
+        <span class="grow"></span>
+        <button id="snapDeleteSelBtn" class="btn small danger-ghost" disabled>删除选中</button>
+      </div>
+      <div class="bm-table-wrap">
+        <table class="bm-table snap-table">
+          <thead>
+            <tr>
+              <th class="col-check"><input type="checkbox" id="snapCheckAll" title="全选本页"></th>
+              <th>时间</th><th>设备</th><th>书签数</th><th>体积</th><th class="col-ops">操作</th>
+            </tr>
+          </thead>
+          <tbody id="snapTable"></tbody>
+        </table>
+      </div>
+      <div class="pager">
+        <button id="snapPrev" class="btn small">上一页</button>
+        <span id="snapPageInfo" class="muted">—</span>
+        <button id="snapNext" class="btn small">下一页</button>
+      </div>
+    </section>
+
+    <section class="card tab-panel" id="panel-search">
+      <div class="card-head"><h2>搜索</h2><span class="muted">标题或网址，回车搜索</span></div>
+      <input id="searchInput" class="search" placeholder="输入关键词">
+      <div id="searchResult" class="result-list"></div>
+    </section>
+
+    <section class="card tab-panel" id="panel-logs">
+      <div class="card-head"><h2>同步日志</h2><span class="muted">最近 100 条</span></div>
+      <div id="logList" class="log-list"></div>
+    </section>
+
+    <section class="card tab-panel" id="panel-users">
+      <div class="card-head"><h2>用户管理</h2><span class="muted">仅管理员 · 每人独立空间</span></div>
+      <div id="userList" class="user-list"></div>
+      <details class="user-form">
+        <summary>+ 添加用户</summary>
+        <div class="form-grid">
+          <div><label>用户名</label><input id="newUsername" type="text" placeholder="例如 xiaoli" autocomplete="off"></div>
+          <div><label>显示名称</label><input id="newDisplay" type="text" placeholder="可选" autocomplete="off"></div>
+          <div><label>初始密码</label><input id="newPassword" type="password" placeholder="至少 6 位" autocomplete="new-password"></div>
+          <div><label>角色</label><select id="newRole"><option value="user">普通用户</option><option value="admin">管理员</option></select></div>
+        </div>
+        <button id="addUserBtn" class="btn primary small">添加用户</button>
+      </details>
+    </section>
+
+    <section class="card tab-panel" id="panel-settings">
+      <div class="card-head"><h2>设置</h2><span class="muted">维护与诊断</span></div>
+      <details class="setting-row">
+        <summary>修改我的密码</summary>
+        <p class="muted">修改后所有已登录的网页与插件会话都会失效。</p>
+        <div class="pw-form">
+          <input id="pwOld" type="password" placeholder="原密码" autocomplete="current-password">
+          <input id="pwNew" type="password" placeholder="新密码" autocomplete="new-password">
+          <input id="pwNew2" type="password" placeholder="确认新密码" autocomplete="new-password">
+          <button id="changePwBtn" class="btn small">修改密码</button>
+        </div>
+      </details>
+      <details class="setting-row">
+        <summary>历史快照</summary>
+        <p class="muted">每台设备保留最近 10 份完整快照。到「快照」菜单可查看目录树、导出 HTML / CSV / JSON 或删除。</p>
+        <button id="gotoSnapshotsBtn" class="btn small">打开快照管理</button>
+      </details>
+    </section>
+
+    <footer class="footer">Fn收藏夹同步 · 飞牛 OS · SQLite 存储 · 数据全部保存在本机 NAS</footer>
+  </main>
+</div>
+
+<div id="bmModal" class="modal hidden">
+  <div class="modal-card">
+    <div class="card-head">
+      <h2 id="bmModalTitle">新增书签</h2>
+      <button id="bmModalClose" class="btn small">关闭</button>
+    </div>
+    <label class="field-label" for="bmTitle">标题</label>
+    <input id="bmTitle" type="text" placeholder="例如 腾讯云">
+    <label class="field-label" for="bmUrl">网址 <span class="muted">必填</span></label>
+    <input id="bmUrl" type="text" spellcheck="false" placeholder="https://example.com">
+    <label class="field-label" for="bmPath">文件夹路径（用 / 分隔）</label>
+    <input id="bmPath" type="text" placeholder="收藏夹栏 / 工作">
+    <p id="bmModalErr" class="err"></p>
+    <div class="modal-actions">
+      <button id="bmModalCancel" class="btn small">取消</button>
+      <button id="bmModalSave" class="btn small primary">保存</button>
+    </div>
+  </div>
+</div>
+
+<div id="moveModal" class="modal hidden">
+  <div class="modal-card narrow">
+    <div class="card-head">
+      <h2>修改所在文件夹</h2>
+      <button id="moveClose" class="btn small">关闭</button>
+    </div>
+    <p class="muted">把选中的 <b id="moveCount">0</b> 条书签移动到：</p>
+    <input id="movePath" type="text" placeholder="留空 = 根目录；多级用 / 分隔，如 工作 / 归档">
+    <p class="muted small">移动过的书签转为手动维护，浏览器下次同步不会把它改回去。</p>
+    <p id="moveErr" class="err"></p>
+    <div class="modal-actions">
+      <button id="moveCancel" class="btn small">取消</button>
+      <button id="moveSave" class="btn small primary">移动</button>
+    </div>
+  </div>
+</div>
+
+<div id="snapModal" class="modal hidden">
+  <div class="modal-card wide">
+    <div class="card-head">
+      <h2 id="snapModalTitle">快照预览</h2>
+      <button id="snapModalClose" class="btn small">关闭</button>
+    </div>
+    <p class="muted small" id="snapModalMeta"></p>
+    <div id="snapModalTree" class="tree"></div>
+    <div class="modal-actions">
+      <span class="muted">下载为</span>
+      <select id="snapModalFmt" class="fmt-select" aria-label="快照导出格式">
+        <option value="html">HTML</option>
+        <option value="csv">CSV</option>
+        <option value="json">JSON</option>
+      </select>
+      <button id="snapDownloadBtn" class="btn small">下载</button>
+      <span class="grow"></span>
+      <button id="snapDeleteOneBtn" class="btn small danger-ghost">删除这份</button>
+    </div>
+  </div>
+</div>
+
+<div id="toast" class="toast"></div>
+<script src="app.js"></script>
+</body>
+</html>

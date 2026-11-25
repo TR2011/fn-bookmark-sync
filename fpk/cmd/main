@@ -1,0 +1,147 @@
+#!/bin/bash
+# Fn收藏夹同步 · 服务启停与状态检查
+# fnOS 约定：start / stop 成功 exit 0；status 运行中 exit 0、未运行 exit 3
+set -u
+
+BASE="$(cd "$(dirname "$0")/.." && pwd)"
+DEST="${TRIM_APPDEST:-$BASE/target}"
+ETC="${TRIM_PKGETC:-$BASE/etc}"
+VAR="${TRIM_PKGVAR:-$BASE/var}"
+PORT="${TRIM_SERVICE_PORT:-8765}"
+# 统一网关：gatewaySocket 只写文件名，实际路径落在 ${TRIM_APPDEST} 下。
+# TRIM_APPDEST 即 /var/apps/edge-bookmarks/target，因此最终为 .../target/app.sock
+GATEWAY_SOCKET="$DEST/app.sock"
+GATEWAY_PREFIX_PATH="/app/edge-bookmarks"
+PIDFILE="$VAR/server.pid"
+LOGFILE="$VAR/server.log"
+PYTHON=""
+
+fail() {
+    msg="$1"
+    [ -n "${TRIM_TEMP_LOGFILE:-}" ] && echo "$msg" > "$TRIM_TEMP_LOGFILE"
+    echo "$msg" >&2
+    exit 1
+}
+
+find_python() {
+    # 飞牛官方 python312 运行时 → 系统 Python → PATH
+    for p in "/var/apps/python312/target/bin/python3" \
+             "/usr/bin/python3" \
+             "/usr/local/bin/python3" \
+             "$(command -v python3 2>/dev/null)"; do
+        if [ -n "$p" ] && [ -x "$p" ]; then PYTHON="$p"; return 0; fi
+    done
+    return 1
+}
+
+probe() {
+    "$PYTHON" - "$PORT" <<'PYCODE' >/dev/null 2>&1
+import sys, urllib.request
+try:
+    urllib.request.urlopen("http://127.0.0.1:%s/api/v1/health" % sys.argv[1], timeout=2).read()
+except Exception:
+    sys.exit(1)
+PYCODE
+}
+
+case "${1:-}" in
+    start)
+        mkdir -p "$VAR" "$ETC" || fail "无法创建数据目录 $VAR"
+        # 启动状态留痕：SSH 上看 $TRIM_PKGVAR/STARTUP_STATUS.txt 即可判断卡在哪一步
+        STATUS="$VAR/STARTUP_STATUS.txt"
+        echo "[$(date '+%F %T')] start 调用，TCP端口=$PORT 网关Socket=$GATEWAY_SOCKET" > "$STATUS" 2>/dev/null || true
+        if ! find_python; then
+            echo "[$(date '+%F %T')] 失败：未找到 Python 3，请在应用中心安装 python312 运行时" \
+                >> "$STATUS" 2>/dev/null || true
+            fail "未找到 Python 3：请先在飞牛「应用中心」搜索并安装官方「python312」运行时，然后在应用中心重新启动本应用。"
+        fi
+        echo "[$(date '+%F %T')] Python=$PYTHON" >> "$STATUS" 2>/dev/null || true
+
+        # 安装期钩子保持零副作用；config.json 与 SQLite 账号库由服务端首次启动时创建。
+        # v1.1.0 起不再生成访问令牌：账号密码保存在 $VAR/bookmarks.db。
+        [ -f "$ETC/config.json" ] && chmod 600 "$ETC/config.json" 2>/dev/null || true
+        rm -f "$ETC/token.txt" 2>/dev/null || true   # 清理 v1.0.x 遗留令牌文件
+
+        if [ -f "$PIDFILE" ]; then
+            oldpid="$(cat "$PIDFILE" 2>/dev/null)"
+            if [ -n "$oldpid" ] && kill -0 "$oldpid" 2>/dev/null && probe; then
+                echo "[$(date '+%F %T')] 服务已在运行，跳过重复启动" >> "$STATUS" 2>/dev/null || true
+                exit 0
+            fi
+        fi
+
+        if [ ! -f "$DEST/bin/server.py" ]; then
+            fail "缺少服务程序 $DEST/bin/server.py，安装包可能不完整。"
+        fi
+
+        export EB_HOST=0.0.0.0
+        export EB_PORT="$PORT"
+        export EB_DATA_DIR="$VAR"
+        export EB_CONFIG="$ETC/config.json"
+        export EB_WEB_DIR="$DEST/web"
+        # 统一网关链路：cmd/main → 服务端监听 Unix Socket → 飞牛按 gatewayPrefix 转发
+        export EB_GATEWAY_SOCKET="$GATEWAY_SOCKET"
+        export EB_GATEWAY_PREFIX="$GATEWAY_PREFIX_PATH"
+        rm -f "$GATEWAY_SOCKET" 2>/dev/null || true   # 重启时清掉陈旧 socket
+        # config/resource 声明的共享目录：书签 HTML 会自动备份到这里
+        if [ -n "${TRIM_DATA_SHARE_PATHS:-}" ]; then
+            export EB_SHARE_DIR="${TRIM_DATA_SHARE_PATHS%%:*}"
+        fi
+
+        if command -v setsid >/dev/null 2>&1; then
+            setsid "$PYTHON" "$DEST/bin/server.py" >> "$LOGFILE" 2>&1 < /dev/null &
+        else
+            "$PYTHON" "$DEST/bin/server.py" >> "$LOGFILE" 2>&1 < /dev/null &
+        fi
+        echo $! > "$PIDFILE"
+
+        for _i in $(seq 1 30); do
+            if probe; then
+                echo "[$(date '+%F %T')] 成功：TCP 直连就绪 http://127.0.0.1:$PORT/" \
+                    >> "$STATUS" 2>/dev/null || true
+                if [ -S "$GATEWAY_SOCKET" ]; then
+                    echo "[$(date '+%F %T')] 成功：统一网关 Socket 已建立 $GATEWAY_SOCKET（$GATEWAY_PREFIX_PATH）" \
+                        >> "$STATUS" 2>/dev/null || true
+                else
+                    echo "[$(date '+%F %T')] 提示：未检测到网关 Socket（本地运行或 Python 无 AF_UNIX），请用 http://<NAS-IP>:$PORT 直接打开管理页" \
+                        >> "$STATUS" 2>/dev/null || true
+                fi
+                exit 0
+            fi
+            sleep 1
+        done
+        echo "[$(date '+%F %T')] 失败：启动超时，详见 $LOGFILE" >> "$STATUS" 2>/dev/null || true
+        fail "服务启动超时，请查看日志：$LOGFILE"
+        ;;
+
+    stop)
+        if [ -f "$PIDFILE" ]; then
+            pid="$(cat "$PIDFILE" 2>/dev/null)"
+            if [ -n "$pid" ]; then
+                kill "$pid" 2>/dev/null || true
+                for _i in $(seq 1 10); do
+                    kill -0 "$pid" 2>/dev/null || break
+                    sleep 1
+                done
+                if kill -0 "$pid" 2>/dev/null; then kill -9 "$pid" 2>/dev/null || true; fi
+            fi
+            rm -f "$PIDFILE"
+        fi
+        rm -f "$GATEWAY_SOCKET" 2>/dev/null || true
+        exit 0
+        ;;
+
+    status)
+        [ -f "$PIDFILE" ] || exit 3
+        pid="$(cat "$PIDFILE" 2>/dev/null)"
+        [ -n "$pid" ] || exit 3
+        kill -0 "$pid" 2>/dev/null || exit 3
+        find_python || exit 3
+        probe || exit 3
+        exit 0
+        ;;
+
+    *)
+        exit 1
+        ;;
+esac
