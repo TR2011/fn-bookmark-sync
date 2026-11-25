@@ -38,7 +38,7 @@ python3 tests/gateway_test.py        # 网关与反代前缀、静态检查、�
 node   tests/endpoint_test.mjs       # 插件端点探测、网关降级、会话失效重登与凭证复用（约 58 项）
 node   tests/config_import_test.mjs  # 配置一键导入与多候选地址自动探测（约 28 项）
 
-python3 tools/build_fpk.py           # 先生成 dist/edge-bookmarks_1.4.0_all.fpk
+python3 tools/build_fpk.py           # 先生成 dist/fn-bookmark-sync_1.4.0_all.fpk
 python3 tests/fpk_lifecycle_test.py  # FPK 安装/启动/停止生命周期模拟、包内资源（依赖上一步产物）
 ```
 
@@ -63,7 +63,7 @@ python3 tools/build_fpk.py --no-port-config --no-zip # 对照包（resource={}�
 bash   tools/build.sh                                # 在 NAS / Linux / WSL 上优先用官方 fnpack
 ```
 
-产物命名：`edge-bookmarks_1.4.0_<platform>.fpk`、`edge-bookmarks-extension_1.4.0.zip`。`dist/` 不忽略，发布时随仓库分发。
+产物命名：`fn-bookmark-sync_1.4.0_<platform>.fpk`、`fn-bookmark-sync-extension_1.4.0.zip`。`dist/` 不忽略，发布时随仓库分发。
 
 ## 四、代码风格
 
@@ -85,11 +85,10 @@ bash   tools/build.sh                                # 在 NAS / Linux / WSL 上
 | 路径前缀 `/app/edge-bookmarks` | 统一网关地址、`EB_GATEWAY_PREFIX`、反代规则、文档 | 同上；网关与反代全部失效 |
 | `edgebm` 专用用户 / 组 | 安装钩子、数据卷属主 | 权限失效，服务无法读写数据 |
 | `EdgeBookmarks.sc` | `config/resource` 端口放行 | 飞牛端口配置引用它，8765 不再放行 |
-| `edge-bookmarks-extension_*.zip` | 产物文件名 | 分发与文档引用，造成版本混乱 |
 | `bookmarks(user_id, url_key)` 唯一约束 | SQLite `bookmarks` 表 | 破坏去重与多用户隔离 |
 | URL 规范化规则（`normalize_url` / `url_key`） | 服务端 | 破坏去重，导致同步循环或数据重复 |
 
-> 品牌中立化只改面向用户的**文案**。如果你发现某处仍写死「Edge」，欢迎提交文案修正，但不要动上面任何内部标识。
+> 品牌中立化只改面向用户的**文案**与**产物文件名**（统一为 `fn-bookmark-sync_*`，由 `tools/build_fpk.py` 的 `PACKAGE_NAME` 控制，与内部标识解耦）。如果你发现某处仍写死「Edge」，欢迎提交文案修正，但不要动上面任何内部标识。
 
 ## 六、提交 PR 流程
 

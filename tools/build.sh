@@ -25,7 +25,7 @@ for line in (root / 'fpk' / 'manifest').read_text(encoding='utf-8').splitlines()
     if '=' in line:
         k, v = line.strip().split('=', 1)
         meta[k] = v
-out = dist / ('edge-bookmarks-extension_%s.zip' % meta['version'])
+out = dist / ('fn-bookmark-sync-extension_%s.zip' % meta['version'])
 with zipfile.ZipFile(out, 'w', zipfile.ZIP_DEFLATED) as z:
     for p in sorted(ext.rglob('*')):
         if p.is_file() and '__pycache__' not in p.parts:

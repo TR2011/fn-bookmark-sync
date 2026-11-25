@@ -14,7 +14,7 @@
 - **代码精简**：重构冗余逻辑，统一服务端与插件的通用能力（配置解析、端点探测、导出格式、去重规则）。
 - 开发者署名统一为 **oldkevin**；文档示例全面脱敏，改用 `nas.example.com` / 文档网段等占位值。
 - 浏览器兼容性策略沿用 v1.3.3：`minimum_chrome_version` 为 91，设备名按真实 UA 识别品牌。
-- 二进制产物版本升级为 `edge-bookmarks_1.4.0_*.fpk` 与 `edge-bookmarks-extension_1.4.0.zip`。
+- 二进制产物版本升级为 `fn-bookmark-sync_1.4.0_*.fpk` 与 `fn-bookmark-sync-extension_1.4.0.zip`。
 
 ### 兼容
 

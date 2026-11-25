@@ -23,7 +23,7 @@ import urllib.request
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
-FPK = ROOT / "dist" / "edge-bookmarks_1.4.0_all.fpk"
+FPK = ROOT / "dist" / "fn-bookmark-sync_1.4.0_all.fpk"
 PORT = 18769
 PASSED = 0
 FAILED = 0

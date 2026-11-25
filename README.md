@@ -7,7 +7,7 @@
 | 当前版本 | **v1.4.0**（界面现代化 · 代码精简 · 开源发布） |
 | 开发者 | **oldkevin** |
 | 协议 | MIT（见 [LICENSE](LICENSE)） |
-| 产品名 | Fn收藏夹同步（内部标识 `edge-bookmarks` 保持不变） |
+| 产品名 | Fn收藏夹同步 |
 
 ---
 
@@ -38,9 +38,9 @@
 ### 1. NAS 安装
 
 1. 应用中心搜索并安装官方 **`python312`** 运行时（fnOS 默认不预装 Python 3）。
-2. 应用中心 →「手动安装」→ 上传 `dist/edge-bookmarks_1.4.0_all.fpk` → 选择安装空间 → 启动。
-   - 若因端口声明安装失败，改用 `edge-bookmarks_1.4.0_all_noport.fpk` 对照包。
-   - 系统不识别 `platform=all` 时改用 `edge-bookmarks_1.4.0_x86.fpk` / `edge-bookmarks_1.4.0_arm.fpk`。
+2. 应用中心 →「手动安装」→ 上传 `dist/fn-bookmark-sync_1.4.0_all.fpk` → 选择安装空间 → 启动。
+   - 若因端口声明安装失败，改用 `fn-bookmark-sync_1.4.0_all_noport.fpk` 对照包。
+   - 系统不识别 `platform=all` 时改用 `fn-bookmark-sync_1.4.0_x86.fpk` / `fn-bookmark-sync_1.4.0_arm.fpk`。
 3. 桌面只保留**一个**图标「Fn收藏夹同步」，点开自动弹出新页面。
 
 > 安装报错见 [安装失败排查](docs/安装失败排查.md)；装好了点图标没反应见 [点开无反应排查](docs/点开无反应排查.md)。
@@ -51,7 +51,7 @@
 
 ### 3. 浏览器安装插件
 
-1. 解压 `dist/edge-bookmarks-extension_1.4.0.zip` 到**固定目录**（不要放在临时目录，加载后不能移动）。
+1. 解压 `dist/fn-bookmark-sync-extension_1.4.0.zip` 到**固定目录**（不要放在临时目录，加载后不能移动）。
 2. `chrome://extensions`（Edge 亦支持 `edge://extensions`）→ 开启「开发人员模式」→「加载解压缩的扩展」→ 选择解压目录。Vivaldi / Opera 用 `vivaldi://extensions` / `opera://extensions`。各浏览器入口与注意点见 [多浏览器支持](docs/多浏览器支持.md)。
 
 ### 4. 复制配置并粘贴
@@ -148,7 +148,7 @@
 | 修改文件夹后同步又变回去 | 改过的书签已转手动维护，正常不会覆盖；若被改回，检查是否又恢复了旧快照 |
 | 插件提示 `invalid token` | 先在浏览器里打开并登录飞牛桌面再试；插件随后会自动尝试局域网直连 |
 | 插件所有地址不可达 | 确认 8765 已放行、电脑与 NAS 同网段；外网需映射 8765 或配独立反代 |
-| 旧插件提示 410 | 卸载旧插件，加载 `edge-bookmarks-extension_1.4.0.zip` |
+| 旧插件提示 410 | 卸载旧插件，加载 `fn-bookmark-sync-extension_1.4.0.zip` |
 | 还原后多出「本机历史备份」目录 | 预期行为，按时间命名；确认内容无误后可手动删掉该目录 |
 | Firefox / Safari 能用吗 | 不能。仅支持 Chromium 内核（≥ 91），见 [多浏览器支持](docs/多浏览器支持.md) |
 
@@ -172,7 +172,7 @@ node tests/config_import_test.mjs   #  28 项：配置一键导入与多候选�
 python tests/fpk_lifecycle_test.py  # FPK 安装/启动/停止生命周期模拟、包内资源（需先构建 1.4.0 主包）
 ```
 
-合计约 560 项断言。前四套无需打包即可运行；`fpk_lifecycle` 需先执行 `python tools/build_fpk.py` 生成 `dist/edge-bookmarks_1.4.0_all.fpk`。
+合计约 560 项断言。前四套无需打包即可运行；`fpk_lifecycle` 需先执行 `python tools/build_fpk.py` 生成 `dist/fn-bookmark-sync_1.4.0_all.fpk`。
 
 更多贡献指引见 [CONTRIBUTING.md](CONTRIBUTING.md)，版本变更见 [CHANGELOG.md](CHANGELOG.md)。
 
@@ -202,10 +202,10 @@ dist/                    发布产物（FPK 与插件 zip）
 
 | 文件 | 用途 |
 | --- | --- |
-| `edge-bookmarks_1.4.0_all.fpk` | 主安装包（纯 Python，通吃 x86 / ARM，含端口放行） |
-| `edge-bookmarks_1.4.0_all_noport.fpk` | 对照包：`resource={}`、无 `.sc`；仅当主包因端口声明安装失败时使用 |
-| `edge-bookmarks_1.4.0_x86.fpk` / `..._arm.fpk` | 单架构包，系统不识别 `platform=all` 时换用 |
-| `edge-bookmarks-extension_1.4.0.zip` | 浏览器插件分发包（Chromium 系通用） |
+| `fn-bookmark-sync_1.4.0_all.fpk` | 主安装包（纯 Python，通吃 x86 / ARM，含端口放行） |
+| `fn-bookmark-sync_1.4.0_all_noport.fpk` | 对照包：`resource={}`、无 `.sc`；仅当主包因端口声明安装失败时使用 |
+| `fn-bookmark-sync_1.4.0_x86.fpk` / `..._arm.fpk` | 单架构包，系统不识别 `platform=all` 时换用 |
+| `fn-bookmark-sync-extension_1.4.0.zip` | 浏览器插件分发包（Chromium 系通用） |
 
 ### 接口速览
 

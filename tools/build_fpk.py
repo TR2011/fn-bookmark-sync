@@ -10,8 +10,8 @@
         python tools/build_fpk.py --sync-only
         然后：cd fpk && fnpack build
 
-产物：dist/edge-bookmarks_<version>_<platform>.fpk
-      dist/edge-bookmarks-extension_<version>.zip
+产物：dist/fn-bookmark-sync_<version>_<platform>.fpk
+      dist/fn-bookmark-sync-extension_<version>.zip
 """
 import argparse
 import hashlib
@@ -30,6 +30,9 @@ FPK = ROOT / "fpk"
 SERVER = ROOT / "server"
 EXT = ROOT / "extension"
 DIST = ROOT / "dist"
+# 分发包名：只用于产物文件名，与 fnOS 内部标识 appname 解耦。
+# appname=edge-bookmarks 是应用识别/升级兼容的关键字段，绝不能改；文件名可自由品牌化。
+PACKAGE_NAME = "fn-bookmark-sync"
 IGNORE = {"__pycache__", ".DS_Store", "Thumbs.db"}
 REQUIRED_MANIFEST = ["appname", "version", "display_name", "desc",
                      "platform", "source", "service_port", "desktop_uidir",
@@ -331,14 +334,14 @@ def main():
 
         platform = args.platform or meta["platform"]
         suffix = "_noport" if args.no_port_config else ""
-        out = DIST / ("%s_%s_%s%s.fpk" % (meta["appname"], meta["version"], platform, suffix))
+        out = DIST / ("%s_%s_%s%s.fpk" % (PACKAGE_NAME, meta["version"], platform, suffix))
         assemble(meta, md5, platform, out, port_config=not args.no_port_config)
         verify_fpk(out, md5)
         app_tgz.unlink(missing_ok=True)
         log("FPK 产物：%s（%d 字节）" % (out.name, out.stat().st_size))
 
         if not args.no_zip:
-            zip_extension(meta, DIST / ("%s-extension_%s.zip" % (meta["appname"], meta["version"])))
+            zip_extension(meta, DIST / ("%s-extension_%s.zip" % (PACKAGE_NAME, meta["version"])))
     finally:
         shutil.rmtree(work, ignore_errors=True)
 
